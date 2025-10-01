@@ -1,5 +1,6 @@
-import openai
+
 from config import config
+from groq import Groq
 
 class LLMService:
     """
@@ -10,10 +11,10 @@ class LLMService:
         """
         Initialize the LLM service with configuration
         """
-        openai.api_key = config['OPENAI_API_KEY']
-        self.model_name = config['MODEL_NAME']
-        self.max_tokens = config['MAX_TOKENS']
-        self.temperature = config['TEMPERATURE']
+        self.client = Groq(api_key=config.GROQ_API_KEY)
+        self.model_name = config.MODEL_NAME
+        self.max_tokens = config.MAX_TOKENS
+        self.temperature = config.TEMPERATURE
     
     def generate_recommendations(self, user_preferences, browsing_history, all_products):
         """
@@ -44,10 +45,10 @@ class LLMService:
         
         # Call the LLM API
         try:
-            response = openai.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=[
-                    {"role": "system", "content": "You are a helpful eCommerce product recommendation assistant."},
+                    {"role": "system", "content": "You are a smart e-commerce recommendation system like those used by Myntra or Amazon. Write recommendations in a direct, engaging style without referring to 'the user' - speak directly as if describing why someone should buy this product. Always respond with valid JSON only, no additional text."},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=self.max_tokens,
@@ -69,8 +70,6 @@ class LLMService:
         """
         Create a prompt for the LLM to generate recommendations
         
-        This is where you should implement your prompt engineering strategy.
-        
         Parameters:
         - user_preferences (dict): User's stated preferences
         - browsed_products (list): Products the user has viewed
@@ -79,33 +78,107 @@ class LLMService:
         Returns:
         - str: Prompt for the LLM
         """
-        # TODO: Implement your prompt engineering strategy
-        # THIS FUNCTION MUST BE IMPLEMENTED BY THE CANDIDATE
-        
-        # Example basic prompt structure (you should significantly improve this):
-        prompt = "Based on the following user preferences and browsing history, recommend 5 products from the catalog with explanations.\n\n"
-        
-        # Add user preferences to the prompt
-        prompt += "User Preferences:\n"
-        for key, value in user_preferences.items():
-            prompt += f"- {key}: {value}\n"
-        
-        # Add browsing history to the prompt
-        prompt += "\nBrowsing History:\n"
-        for product in browsed_products:
-            prompt += f"- {product['name']} (Category: {product['category']}, Price: ${product['price']})\n"
-        
-        # Add instructions for the response format
-        prompt += "\nPlease recommend 5 products from the catalog that match the user's preferences and browsing history. For each recommendation, provide the product ID, name, and a brief explanation of why you're recommending it.\n"
-        
-        # Add response format instructions
-        prompt += "\nFormat your response as a JSON array with objects containing 'product_id', 'explanation', and 'score' (1-10 indicating confidence)."
-        
-        # You would likely want to include the product catalog in the prompt
-        # But be careful about token limits!
-        # For a real implementation, you might need to filter the catalog to relevant products first
+        #Filter products based on preferences to reduce token usage
+        filtered_products = self._filter_products_by_preferences(all_products, user_preferences)
+
+        #Prompt
+        prompt = """You are an expert e-commerce recommendation system similar to Myntra or Amazon. Analyze the preferences and browsing history to recommend exactly 5 products.
+
+IMPORTANT: 
+1. You must respond with a valid JSON array containing exactly 5 recommendations.
+2. Write explanations in a direct, engaging style like real shopping apps do
+3. NEVER mention "the user", "for the user", "the customer" etc.
+4. Write as if you're describing why this product is great, not why it's great for someone
+
+USER PREFERENCES:
+"""
+        # User Preferences
+        price_range = user_preferences.get('priceRange', 'all')
+        categories = user_preferences.get('categories', [])
+        brands = user_preferences.get('brands', [])
+
+        prompt += f"- Price Range: {price_range}\n"
+        prompt += f"- Preferred categories: {', '.join(categories) if categories else 'No specific preference'}\n"
+        prompt += f"- Preferred brands: {', '.join(brands) if brands else 'No specific preference'}\n"
+
+        # Detailed Browsing history
+        if browsed_products: 
+            prompt += "\n BROWSING HISTORY (products user has viewed):\n"
+            for product in browsed_products:
+                prompt += f"- {product['name']} | Category: {product['category']} | Brand: {product['brand']} | Price: ${product['price']} | Tags: {', '.join(product.get('tags', []))}\n"
+        else:
+            prompt += "\nBROWSING HISTORY: No previous browsing history\n"
+
+        # Available filtered products
+        prompt += f"\nAVAILABLE PRODUCTS TO RECOMMEND FROM ({len(filtered_products)} products after filtering):\n"
+
+        # Include upto 40 most relevant products
+        for product in filtered_products[:40]:
+            prompt += f"ID: {product['id']} | {product['name']} | Category: {product['category']} | Brand: {product['brand']} | Price: ${product['price']} | Rating: {product['rating']}\n"
+
+        # Response format
+        prompt += """TASK: Based on the user's preferences and browsing history, recommend exactly 5 products that would be most appealing to this user.
+
+RECOMMENDATION CRITERIA:
+1. Match user's price range preference
+2. Align with preferred categories and brands
+3. Consider patterns from browsing history (similar items, complementary products)
+4. Prioritize highly-rated products
+5. Suggest diverse but relevant options
+
+RESPONSE FORMAT: Return ONLY a JSON array with this exact structure:
+[
+  {
+    "product_id": "prod001",
+    "explanation": "Direct, engaging 2-3 sentence explanation written like a real shopping app recommendation. Focus on product benefits and why it's a great choice.",
+    "score": 9
+  }
+]
+
+Each recommendation must include:
+- product_id: The exact ID from the available products list
+- explanation: Direct, engaging reason, how and why is this product recommended (NO mention of 'user' or 'customer')
+- score: Confidence score from 1-10
+
+Return ONLY the JSON array, no additional text."""
         
         return prompt
+    
+    def _filter_products_by_preferences(self, products, preferences):
+        """
+        Helper method to filter products based on user preferences
+
+        Parameters: 
+        - browsed_products (list): Products the user has viewed
+        - user_preferences (dict): User's stated preferences
+
+        Returns:
+        - list: filtered products 
+        """
+        filtered = products.copy()
+
+        # Filter by price range
+        price_range = preferences.get('priceRange', 'all')
+        if price_range == '0-50':
+            filtered = [p for p in filtered if p['price'] <= 50]
+        elif price_range == '50-100':
+            filtered = [p for p in filtered if 50 < p['price'] <= 100]
+        elif price_range == '100+':
+            filtered = [p for p in filtered if p['price'] > 100]
+
+        # Filter by categories if specified
+        categories = preferences.get('categories', [])
+        if categories:
+            category_filtered = [p for p in filtered if p['category'] in categories]
+            if len(category_filtered) >= 10:
+                filtered = category_filtered
+        
+        # Priortize preferred brands but don't exclude others
+        brands = preferences.get('brands', [])
+        if brands:
+            filtered.sort(key=lambda p: 0 if p['brand'] in brands else 1)
+
+        return filtered
     
     def _parse_recommendation_response(self, llm_response, all_products):
         """
@@ -118,57 +191,86 @@ class LLMService:
         Returns:
         - dict: Structured recommendations
         """
-        # TODO: Implement response parsing logic
-        # THIS FUNCTION MUST BE IMPLEMENTED BY THE CANDIDATE
-        
-        # Example implementation (very basic, should be improved):
         try:
             import json
-            # Attempt to parse JSON from the response
-            # Note: This is a simplistic approach and should be made more robust
-            # The candidate should implement better parsing logic
+            import re
+
+            # Clean response, remove markdown 
+            cleaned_response = llm_response.strip()
+            cleaned_response = re.sub(r'```json\s*', '', cleaned_response)
+            cleaned_response = re.sub(r'```\s*', '', cleaned_response)
+
+            json_match = re.search(r'```math[\s\S]*```', cleaned_response)
+
+            if not json_match:
+                # parse entire response
+                rec_data = json.loads(cleaned_response)
+            else:
+                rec_data = json.loads(json_match.group())
             
-            # Find JSON content in the response
-            start_idx = llm_response.find('[')
-            end_idx = llm_response.rfind(']') + 1
-            
-            if start_idx == -1 or end_idx == 0:
-                # Fallback if JSON parsing fails
-                return {
-                    "recommendations": [],
-                    "error": "Could not parse recommendations from LLM response"
-                }
-            
-            json_str = llm_response[start_idx:end_idx]
-            rec_data = json.loads(json_str)
-            
-            # Enrich recommendations with full product details
+            # Validate recommendations
             recommendations = []
+            seen_products = set() # To avoid duplicates
+
             for rec in rec_data:
                 product_id = rec.get('product_id')
-                product_details = None
                 
-                # Find the full product details
+                if product_id in seen_products:
+                    continue
+
+                product_details = None
                 for product in all_products:
                     if product['id'] == product_id:
                         product_details = product
                         break
                 
                 if product_details:
+                    seen_products.add(product_id)
                     recommendations.append({
                         "product": product_details,
-                        "explanation": rec.get('explanation', ''),
-                        "confidence_score": rec.get('score', 5)
+                        "explanation": rec.get('explanation', 'This product matches your preferences.'),
+                        "confidence_score": int(rec.get('score', '5'))
+                    })
+            
+            if not recommendations:
+                # Recommend top-rated products
+                fallback_products = sorted(all_products, key=lambda p: p.get('rating', 0),reverse=True)[:5]
+                for product in fallback_products:
+                    recommendations.append({
+                        "product": product,
+                        "explanation": f"This highly-rated {product['category'].lower()} product might interest you.",
+                        "confidence_score": 5
                     })
             
             return {
-                "recommendations": recommendations,
-                "count": len(recommendations)
+                "recommendations": recommendations[:5],
+                "count": len(recommendations[:5])
             }
+        
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {str(e)}")
+            print(f"LLM Response: {llm_response[:500]}...")
+
+            fallback_products = sorted(all_products, key=lambda p: p.get('rating', 0),reverse=True)[:5]
+            fallback_recommendations = []
+
+            for product in fallback_products:
+                fallback_recommendations.append({
+                    "product": product,
+                    "explanation": f"This highly-rated {product['category'].lower()} product is popular with our customers.",
+                    "confidence_score": 5
+                })
             
+            return {
+                "recommendations": fallback_recommendations,
+                "count": len(fallback_recommendations),
+                "error": "Used fallback recommendations due to parsing error"
+            }
+        
         except Exception as e:
-            print(f"Error parsing LLM response: {str(e)}")
+            print(f"Unexpected error parsing response: {str(e)}")
             return {
                 "recommendations": [],
+                "count": 0,
                 "error": f"Failed to parse recommendations: {str(e)}"
             }

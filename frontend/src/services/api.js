@@ -1,11 +1,10 @@
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Fetch all products from the API
 export const fetchProducts = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/products`);
     if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
+      throw new Error('Failed to fetch products');
     }
     return await response.json();
   } catch (error) {
@@ -14,8 +13,7 @@ export const fetchProducts = async () => {
   }
 };
 
-// Get recommendations based on user preferences and browsing history
-export const getRecommendations = async (preferences, browsingHistory) => {
+export const fetchRecommendations = async (preferences, browsingHistory) => {
   try {
     const response = await fetch(`${API_BASE_URL}/recommendations`, {
       method: 'POST',
@@ -25,16 +23,16 @@ export const getRecommendations = async (preferences, browsingHistory) => {
       body: JSON.stringify({
         preferences: preferences,
         browsing_history: browsingHistory
-      }),
+      })
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
+      throw new Error('Failed to fetch recommendations');
     }
     
     return await response.json();
   } catch (error) {
-    console.error('Error getting recommendations:', error);
+    console.error('Error fetching recommendations:', error);
     throw error;
   }
 };

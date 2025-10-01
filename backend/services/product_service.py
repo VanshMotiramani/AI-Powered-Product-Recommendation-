@@ -1,3 +1,4 @@
+# backend/services/product_service.py
 import json
 from config import config
 
@@ -10,7 +11,7 @@ class ProductService:
         """
         Initialize the product service with data path from config
         """
-        self.data_path = config['DATA_PATH']
+        self.data_path = config.DATA_PATH
         self.products = self._load_products()
     
     def _load_products(self):
@@ -44,3 +45,21 @@ class ProductService:
         Get products filtered by category
         """
         return [p for p in self.products if p['category'] == category]
+    
+    def get_products_by_ids(self, product_ids):
+        """
+        Get multiple products by their IDs
+        """
+        return [p for p in self.products if p['id'] in product_ids]
+    
+    def get_unique_categories(self):
+        """
+        Get all unique categories
+        """
+        return list(set(p['category'] for p in self.products))
+    
+    def get_unique_brands(self):
+        """
+        Get all unique brands
+        """
+        return list(set(p['brand'] for p in self.products))

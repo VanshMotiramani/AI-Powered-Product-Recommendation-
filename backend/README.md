@@ -18,8 +18,11 @@ backend/
 │   ├── llm_service.py   # Service for LLM interactions (implement this)
 │   └── product_service.py  # Service for product data operations
 │
+├── APPROACH.md          # Backend Documentation
 └── README.md            # This file
 ```
+## Technical Approach
+See [APPROACH.md](APPROACH.md) for detailed technical documentation.
 
 ## Setup Instructions
 
@@ -39,8 +42,8 @@ backend/
 
 4. Create a `.env` file in the backend directory with your OpenAI API key:
    ```
-   OPENAI_API_KEY=your_openai_api_key_here
-   MODEL_NAME=gpt-3.5-turbo
+   GROQ_API_KEY=your_api_key_here
+   MODEL_NAME=gemma2-9b-it
    MAX_TOKENS=1000
    TEMPERATURE=0.7
    DATA_PATH=data/products.json

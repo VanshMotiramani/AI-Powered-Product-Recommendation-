@@ -1,117 +1,121 @@
-# AI-Powered Product Recommendation Engine - Frontend
+# AI-Powered Product Recommendation - Frontend
 
-This is the frontend component of the AI-Powered Product Recommendation Engine take-home assignment. It provides a React interface that allows users to browse products, set preferences, and receive personalized recommendations.
+This is the React-based frontend component of the AI-Powered Product Recommendation Engine. It provides a clean, responsive interface that allows users to browse products, set preferences, and receive personalized AI-driven recommendations.
 
 ## Project Structure
-
 ```
 frontend/
 │
 ├── public/
-│   └── index.html
+│ └── index.html # HTML template
 │
 ├── src/
-│   ├── App.js           # Main application component
-│   ├── index.js         # Entry point
-│   ├── components/
-│   │   ├── Catalog.js   # Product catalog display (implement this)
-│   │   ├── UserPreferences.js  # Preference form (implement this)
-│   │   ├── Recommendations.js  # Recommendations display (implement this)
-│   │   └── BrowsingHistory.js  # Browsing history component (implement this)
-│   │
-│   ├── services/
-│   │   └── api.js       # API client for backend communication
-│   │
-│   └── styles/
-│       └── App.css      # Styling
+│ ├── App.js # Main application component with state management
+│ ├── index.js # React entry point
+│ │
+│ ├── components/
+│ │ ├── Catalog.js # Product catalog with search, filter, and sort
+│ │ ├── UserPreferences.js # Preference selection form
+│ │ ├── Recommendations.js # AI recommendations display
+│ │ └── BrowsingHistory.js # User browsing history tracker
+│ │
+│ ├── services/
+│ │ └── api.js # API client for backend communication
+│ │
+│ └── styles/
+│ ├── App.css # Main application styles
+│ ├── Catalog.css # Product catalog styles
+│ ├── UserPreferences.css # Preferences form styles
+│ ├── Recommendations.css # Recommendations display styles
+│ ├── BrowsingHistory.css # Browsing history styles
+│ └── index.css # Global styles
 │
-├── package.json         # NPM dependencies
-└── README.md            # This file
+├── package.json # NPM dependencies
+└── README.md # This file
 ```
-
 ## Setup Instructions
+### Prerequisites
+- Node.js (v14 or higher)
+- NPM or Yarn
+- Backend server running on port 5000
+1. Navigate to frontend directory
+    ```bash
+    cd frontend
+    ```
 
-1. Install dependencies:
-   ```
-   npm install
-   ```
+2. Install dependencies:
+    ```bash
+    npm install
+    ```
 
-2. Start the development server:
+3. Start the development server:
    ```
    npm start
    ```
 
 The application will open at `http://localhost:3000`.
 
-## Implementation Tasks
-
-As part of this assignment, you need to implement the following components:
+## Implemented Features
 
 ### 1. Catalog Component (components/Catalog.js)
 
-Create a product catalog display that:
-- Shows products in a grid or list format
-- Displays key product information (name, price, image, category, brand)
-- Allows users to click on products to add them to browsing history
-- Provides visual feedback for products that are in the browsing history
+- Grid-based product display with responsive layout
+- Real-time search functionality across product names, brands, and categories
+- Category filtering with dropdown selection
+- Multiple sorting options (name, price low-to-high, price high-to-low, rating)
+- Visual indication for previously viewed products
+- Clean text-based cards displaying:
+    - Product name, brand, category, and subcategory
+    - Price and rating
+    - Product description (truncated)
+    - Tags and inventory status
+    - "Viewed" badge for browsing history items
 
 ### 2. User Preferences Component (components/UserPreferences.js)
 
-Implement a form that allows users to set their preferences:
-- Price range selection (e.g., dropdown or slider)
-- Category selection (checkboxes or multi-select)
-- Brand selection (checkboxes or multi-select)
-- Any other relevant preference options
+- Price range selection with radio buttons (All, $0-50, $50-100, $100+)
+- Multi-select category preferences with checkboxes
+- Multi-select brand preferences (limited to 10 selections)
+- Clear all preferences functionality
+- Real-time preference summary display
+- Visual feedback for selected options
+- Validation and user-friendly warnings
 
 ### 3. Recommendations Component (components/Recommendations.js)
 
-Create a recommendations display that:
-- Shows recommended products with explanations
-- Provides a clean, user-friendly layout
-- Handles loading states during recommendation generation
-- Displays empty states when no recommendations are available
+- Displays 5 personalized product recommendations
+- Shows AI-generated explanations for each recommendation
+- Confidence score visualization (1-10 scale with progress bar)
+- Comprehensive product details for each recommendation
+- Product features list
+- Loading state with spinner during API calls
+- Error state handling with user-friendly messages
+- Empty state when no recommendations available
+- Clickable products to add to browsing history
 
 ### 4. Browsing History Component (components/BrowsingHistory.js)
+- Chronological list of viewed products
+- Individual item removal capability
+- Clear all history functionality
+- Compact product information display
+- Summary statistics (total products, categories, brands viewed)
+- Empty state with helpful prompts
+- Persistent across tab switches
 
-Implement a browsing history display that:
-- Shows products the user has clicked on
-- Allows clearing the browsing history
-- Provides a compact summary of browsed items
+## Error Handling:
+- Network errors are caught and displayed to users
+- Fallback states for failed API calls
+- Retry functionality through the "Get AI Recommendations" button
 
-## API Integration
+## UI/UX Features
+### Responsive Design:
+- Mobile-first responsive grid layouts
+- Flexible navigation that adapts to screen size
+- Responsive form controls and buttons
+- Optimized for screens from 320px to 4K
 
-The frontend communicates with the backend through the API client in `services/api.js`. The key endpoints are:
-
-- `GET /api/products` - Fetches the product catalog
-- `POST /api/recommendations` - Gets personalized recommendations based on preferences and browsing history
-
-## Evaluation Criteria
-
-Your frontend implementation will be evaluated based on:
-
-1. **Component Architecture (40%)**
-   - Organization and structure of components
-   - State management and data flow
-   - Component reusability and modularity
-
-2. **User Experience (40%)**
-   - Intuitive interface design
-   - Responsive layout
-   - Loading and error states
-   - Overall usability
-
-3. **Code Quality (20%)**
-   - Code readability and organization
-   - CSS styling approach
-   - Documentation and comments
-
-## Tips for Success
-
-- **Focus on functionality first**: Ensure all required features work correctly before enhancing the UI
-- **Keep it responsive**: Make sure your interface works well on different screen sizes
-- **Handle edge cases**: Account for empty states, loading states, and error conditions
-- **Use React best practices**: Follow React patterns for state management and component composition
-- **Consider performance**: Be mindful of performance, especially when handling large product catalogs
-- **Clean UI**: While advanced styling is not the primary focus, a clean and intuitive interface is important
-
-Remember that this is a full-stack assignment, so balance your time between frontend and backend implementation to create a cohesive solution.
+### Navigation:
+- Tab-based navigation between main features
+- Persistent "Get AI Recommendations" button
+- Visual indication of active tab
+- Browsing history count in navigation
