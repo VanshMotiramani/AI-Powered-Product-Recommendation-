@@ -5,6 +5,72 @@
 
 This is a full-stack AI-powered product recommendation system that leverages Large Language Models (LLMs) to generate personalized product recommendations based on user preferences and browsing history. The system demonstrates effective prompt engineering, RESTful API design, and modern React development practices.
 
+### Architecture
+
+
+```mermaid
+graph TB
+    subgraph "Frontend - React Application"
+        UI[User Interface]
+        CAT[Catalog Component]
+        PREF[Preferences Component]
+        REC[Recommendations Component]
+        HIST[History Component]
+        STATE[State Management<br/>useState/useEffect]
+        API_CLIENT[API Client<br/>fetch]
+        
+        UI --> CAT
+        UI --> PREF
+        UI --> REC
+        UI --> HIST
+        CAT --> STATE
+        PREF --> STATE
+        REC --> STATE
+        HIST --> STATE
+        STATE --> API_CLIENT
+    end
+    
+    subgraph "Backend - FastAPI Server"
+        FASTAPI[FastAPI Application<br/>app.py]
+        CORS[CORS Middleware]
+        VALID[Pydantic Validation]
+        PROD_SVC[Product Service]
+        LLM_SVC[LLM Service]
+        CONFIG[Configuration]
+        
+        FASTAPI --> CORS
+        FASTAPI --> VALID
+        VALID --> PROD_SVC
+        VALID --> LLM_SVC
+        LLM_SVC --> CONFIG
+    end
+    
+    subgraph "Data Layer"
+        JSON[(products.json<br/>50 Products)]
+        ENV[.env Configuration]
+        
+        PROD_SVC --> JSON
+        CONFIG --> ENV
+    end
+    
+    subgraph "External Services"
+        GROQ[Groq API<br/>Gemma2-9b-it Model]
+        
+        LLM_SVC --> GROQ
+    end
+    
+    API_CLIENT -->|HTTP REST API| FASTAPI
+    
+    classDef frontend fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef backend fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef data fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef external fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    
+    class UI,CAT,PREF,REC,HIST,STATE,API_CLIENT frontend
+    class FASTAPI,CORS,VALID,PROD_SVC,LLM_SVC,CONFIG backend
+    class JSON,ENV data
+    class GROQ external
+```
 ### Project
 
 #### Backend (Python)
